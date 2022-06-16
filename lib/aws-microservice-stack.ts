@@ -1,16 +1,25 @@
-import { Stack, StackProps } from 'aws-cdk-lib';
+import { RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
+import { DynamoDb } from './dynamo/dynamo';
+import { Lambdas } from './lambdas/lambdas';
+import { ApiGateway } from './apigateway/apigateway';
 
 export class AwsMicroserviceStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
-    // The code that defines your stack goes here
 
-    // example resource
-    // const queue = new sqs.Queue(this, 'AwsMicroserviceQueue', {
-    //   visibilityTimeout: cdk.Duration.seconds(300)
-    // });
+    const database = new DynamoDb(this, "DynamoDB");
+
+    const microserviceLambda = new Lambdas(this,"Microservice",{
+      productTable: database.productTable,
+      basketTable: database.basketTable
+    })
+
+    const apigateway = new ApiGateway(this,"ApiGateway",{
+      productMicroservice: microserviceLambda.productFuntion,
+      basketMicroservice: microserviceLambda.basketFuntion
+    })
+ 
   }
 }
